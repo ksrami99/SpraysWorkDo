@@ -7,20 +7,28 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath) => {
   try {
-    if (!localFilePath) {
-      return null;
-    }
-
+    if (!localFilePath) return null;
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
     });
-
-    console.log("File uploaded on Cloudinary Successfully", response.url);
+    fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
-    fs.unlinkSync(localFilePath);
+    fs.unlinkSync(localFilePath); 
     return null;
   }
 };
+
+const deleteOnCloudinary = async (url, resource_type) => {
+  try {
+    await cloudinary.api
+      .delete_resources([url], { type: "upload", resource_type: resource_type })
+      .then(console.log);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export { uploadOnCloudinary, deleteOnCloudinary };
