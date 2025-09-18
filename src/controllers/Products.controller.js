@@ -3,7 +3,7 @@ import { getAllProducts } from "../db/procedures/products.procedures.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
-import { uploadOnCloudinary } from "../utils/coudinary.js";
+import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/coudinary.js";
 
 export const createProduct = asyncHandler(async (req, res) => {
   let { title, slug, description, price, stock, sku, category_id, is_active } =
@@ -19,7 +19,6 @@ export const createProduct = asyncHandler(async (req, res) => {
     "SELECT id FROM products WHERE slug = ?",
     [slug],
   );
-  console.log(slugExist);
 
   if (slugExist.length >= 1) {
     throw new ApiError(400, "Slug name must be unique");
@@ -30,7 +29,6 @@ export const createProduct = asyncHandler(async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [title, slug, description, price, stock, sku, category_id, is_active],
   );
-  console.log();
 
   const productId = productResult.insertId;
 
@@ -76,8 +74,6 @@ export const getProducts = asyncHandler(async (req, res) => {
     page = 1,
     limit = 10,
   } = req.query;
-
-  console.log(req.query);
 
   page = parseInt(page) || 1;
   limit = parseInt(limit) || 10;
@@ -247,4 +243,173 @@ export const getProductById = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(200, response, "Product details fetched successfully"),
     );
+});
+
+export const updateProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    title,
+    slug,
+    description,
+    price,
+    stock,
+    sku,
+    category_id,
+    is_active,
+  } = req.body || {};
+
+  // Check if product exists
+  const [[existing]] = await pool.query("SELECT * FROM products WHERE id = ?", [
+    id,
+  ]);
+  if (!existing) {
+    throw new ApiError(404, "Product Not found");
+  }
+
+  // Update fields (only those provided)
+  const updateFields = [];
+  const values = [];
+
+  if (title !== undefined) {
+    updateFields.push("title = ?");
+    values.push(title);
+  }
+  if (slug !== undefined) {
+    updateFields.push("slug = ?");
+    values.push(slug);
+  }
+  if (description !== undefined) {
+    updateFields.push("description = ?");
+    values.push(description);
+  }
+  if (price !== undefined) {
+    updateFields.push("price = ?");
+    values.push(price);
+  }
+  if (stock !== undefined) {
+    updateFields.push("stock = ?");
+    values.push(stock);
+  }
+  if (sku !== undefined) {
+    updateFields.push("sku = ?");
+    values.push(sku);
+  }
+  if (category_id !== undefined) {
+    updateFields.push("category_id = ?");
+    values.push(category_id);
+  }
+  if (is_active !== undefined) {
+    updateFields.push("is_active = ?");
+    values.push(is_active);
+  }
+
+  if (updateFields.length === 0) {
+    return res.status(400).json({ message: "No fields to update" });
+  }
+
+  values.push(id);
+
+  const sql = `UPDATE products SET ${updateFields.join(", ")} WHERE id = ?`;
+  await pool.query(sql, values);
+
+  // Get updated product
+  const [[updated]] = await pool.query("SELECT * FROM products WHERE id = ?", [
+    id,
+  ]);
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { product: updated },
+        "Product updated successfully",
+      ),
+    );
+});
+
+export const deleteProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Check if product exists
+  const [[existing]] = await pool.query("SELECT * FROM products WHERE id = ?", [
+    id,
+  ]);
+  if (!existing) {
+    throw new ApiError(404, "Product not Found");
+  }
+
+  await pool.query("DELETE FROM product_images WHERE product_id = ?", [id]);
+
+  await pool.query("DELETE FROM products WHERE id = ?", [id]);
+
+  res
+    .status(200)
+    .json(new ApiError(200, { productId: id }, "Product deleted successfully"));
+});
+
+export const uploadImage = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  let uploadedImages = [];
+  if (req.files && req.files.length > 0) {
+    uploadedImages = await Promise.all(
+      req.files.map(async (file, index) => {
+        const result = await uploadOnCloudinary(file.path);
+        return [id, result.secure_url, index ? false : true];
+      }),
+    );
+  }
+
+  await pool.query(
+    `INSERT INTO product_images (product_id, url, is_primary)
+         VALUES ?`,
+    [uploadedImages.map((img) => [...img])],
+  );
+
+  res.status(201).json(
+    new ApiResponse(
+      201,
+      {
+        product_id: id,
+        images: uploadedImages.map((img) => ({
+          url: img[1],
+          is_primary: img[2],
+        })),
+      },
+      "Images Uploaded successfully",
+    ),
+  );
+});
+
+export const deleteProductImage = asyncHandler(async (req, res) => {
+  const { id, imageId } = req.params;
+
+  // Check product exists
+  const [[product]] = await pool.query("SELECT * FROM products WHERE id = ?", [
+    id,
+  ]);
+  if (!product) {
+    return res.status(404).json({ message: "Product not found" });
+  }
+
+  // Check image exists
+  const [[image]] = await pool.query(
+    "SELECT * FROM product_images WHERE id = ? AND product_id = ?",
+    [imageId, id],
+  );
+  if (!image) {
+    return res.status(404).json({ message: "Image not found" });
+  }
+
+  // Delete from Cloudinary
+  await deleteOnCloudinary(image.url);
+
+  // Delete from DB
+  await pool.query("DELETE FROM product_images WHERE id = ?", [imageId]);
+
+  res.json({
+    message: "Product image deleted successfully",
+    productId: id,
+    imageId: imageId,
+  });
 });
