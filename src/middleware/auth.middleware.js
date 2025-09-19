@@ -26,7 +26,8 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Unauthorized request");
   }
 
-  req.user = user;
+  req.user = user[0];
+  
   next();
 });
 
