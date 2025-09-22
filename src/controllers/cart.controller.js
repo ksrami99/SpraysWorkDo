@@ -5,7 +5,6 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 
 export const getCart = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  console.log(userId);
   
   let [[cart]] = await pool.query("SELECT * FROM carts WHERE user_id = ?", [
     userId,

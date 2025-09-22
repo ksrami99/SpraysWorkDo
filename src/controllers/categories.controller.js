@@ -65,7 +65,6 @@ export const updateCategory = asyncHandler(async (req, res) => {
     WHERE id = ?;`;
 
   const [rows] = await pool.query(updateQuery, [name, name, slug, slug, id]);
-  console.log(rows);
 
   if (rows.affectedRows < 1) {
     throw new ApiError("Something want wrong while creating Category");

@@ -27,10 +27,9 @@ export const registerUser = asyncHandler(async (req, res) => {
     [fullname, email, hashedPassword],
   );
 
-  console.log(result);
 
   const newUser = await getUserById(result.insertId);
-  console.log(newUser);
+
 
   if (!newUser) {
     throw new ApiError(500, "Something went wrong while creating user");
