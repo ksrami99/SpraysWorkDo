@@ -9,9 +9,9 @@ import {
 
 const router = Router();
 
-router.route("/products/:productId").get(verifyToken, getReviewsByProduct);
-router.route("/:id").get(verifyToken, getReviewById);
-router.route("/:id").put(verifyToken, updateReview);
-router.route("/:productId").post(verifyToken, addReview);
+router.route("/products/:productId").get(getReviewsByProduct);
+router.route("/:id").get(getReviewById);
+router.route("/:id").put(updateReview);
+router.route("/:productId").post(addReview);
 
 export default router;
