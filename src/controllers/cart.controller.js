@@ -74,6 +74,7 @@ export const addToCart = asyncHandler(async (req, res) => {
       {
         cartId: cart.id,
         productId,
+        quantity
       },
       "Item added to cart",
     ),
