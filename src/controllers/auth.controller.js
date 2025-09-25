@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
 import {
   getUserByEmail,
@@ -27,9 +27,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     [fullname, email, hashedPassword],
   );
 
-
   const newUser = await getUserById(result.insertId);
-
 
   if (!newUser) {
     throw new ApiError(500, "Something went wrong while creating user");
@@ -39,7 +37,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(201, newUser[0], "User Created Successfully"));
 });
-
 
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -74,13 +71,13 @@ export const loginUser = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        { existingUser, token },
-        "User Created Successfully",
+        { User: existingUser[0], token },
+        "User LoggedIn Successfully",
       ),
     );
 });
 
-export const getProfile  = asyncHandler(async (req, res) => {
+export const getProfile = asyncHandler(async (req, res) => {
   const user = req.user;
 
   if (!user) {

@@ -78,6 +78,41 @@ export const getMyOrders = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, { count: orders.length, orders }));
 });
 
+export const getOrders = asyncHandler(async (req, res) => {
+  const [orders] = await pool.query(
+    `SELECT 
+        o.id AS order_id,
+        o.total_amount,
+        o.status,
+        o.address,
+        o.payment_method,
+       
+        
+        u.id AS user_id,
+        u.fullname AS customer_name,
+        u.email AS customer_email,
+        u.role AS user_role,
+        
+        oi.id AS order_item_id,
+        oi.product_id,
+        oi.quantity,
+        oi.price_at_purchase,
+
+        o.created_at AS order_created_at,
+        o.updated_at AS order_updated_at
+
+        FROM orders o
+        JOIN users u 
+            ON o.user_id = u.id
+        JOIN order_items oi 
+            ON oi.order_id = o.id
+        ORDER BY o.created_at DESC;
+    `,
+  );
+
+  res.status(200).json(new ApiResponse(200, { count: orders.length, orders }));
+});
+
 export const getOrderById = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
