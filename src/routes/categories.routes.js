@@ -2,6 +2,7 @@ import { Router } from "express";
 import { isAdmin } from "../middleware/auth.middleware.js";
 import {
   createCategory,
+  deleteCategory,
   getAllCategories,
   getCategory,
   updateCategory,
@@ -22,5 +23,6 @@ router
 router
   .route("/:id")
   .patch(isAdmin, updateCategoryValidator(), validate, updateCategory);
+router.route("/:id").delete(isAdmin, deleteCategory);
 
 export default router;

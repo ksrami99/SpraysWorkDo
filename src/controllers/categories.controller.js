@@ -59,10 +59,10 @@ export const updateCategory = asyncHandler(async (req, res) => {
   if (slug == undefined) slug = null;
 
   const updateQuery = `UPDATE categories 
-    SET     
-        name    = IF(? IS NULL, name, ?),
-        name    = IF(? IS NULL, slug, ?)
-    WHERE id = ?;`;
+  SET     
+      name = IF(? IS NULL, name, ?),
+      slug = IF(? IS NULL, slug, ?)
+  WHERE id = ?;`;
 
   const [rows] = await pool.query(updateQuery, [name, name, slug, slug, id]);
 
@@ -84,4 +84,19 @@ export const getCategory = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, category[0], "Data Fetched Successfully"));
+});
+
+export const deleteCategory = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  if (!id) {
+    throw new ApiError(400, "Category id is required");
+  }
+  const deleteQuery = "DELETE FROM categories WHERE id = ?";
+  const [result] = await pool.query(deleteQuery, [id]);
+  if (result.affectedRows < 1) {
+    throw new ApiError(404, "Category not found or already deleted");
+  }
+  res
+    .status(200)
+    .json(new ApiResponse(200, null, "Category deleted successfully"));
 });

@@ -5,7 +5,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 
 export const getCart = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  
+
   let [[cart]] = await pool.query("SELECT * FROM carts WHERE user_id = ?", [
     userId,
   ]);
@@ -50,9 +50,19 @@ export const addToCart = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Product ID and valid quantity required");
   }
 
+  // ensure product exists
+  const [[product]] = await pool.query("SELECT id FROM products WHERE id = ?", [
+    productId,
+  ]);
+  if (!product) {
+    throw new ApiError(404, "Product not found");
+  }
+
   let [[cart]] = await pool.query("SELECT * FROM carts WHERE user_id = ?", [
     userId,
   ]);
+  console.log(cart);
+
   if (!cart) {
     const [result] = await pool.query(
       "INSERT INTO carts (user_id) VALUES (?)",
@@ -74,7 +84,7 @@ export const addToCart = asyncHandler(async (req, res) => {
       {
         cartId: cart.id,
         productId,
-        quantity
+        quantity,
       },
       "Item added to cart",
     ),
