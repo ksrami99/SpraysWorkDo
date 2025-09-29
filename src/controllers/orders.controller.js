@@ -79,14 +79,16 @@ export const getMyOrders = asyncHandler(async (req, res) => {
 });
 
 export const getOrders = asyncHandler(async (req, res) => {
-  const [orders] = await pool.query(
+  // Fetch orders with joined order items
+  const [rows] = await pool.query(
     `SELECT 
         o.id AS order_id,
         o.total_amount,
         o.status,
         o.address,
         o.payment_method,
-       
+        o.created_at AS order_created_at,
+        o.updated_at AS order_updated_at,
         
         u.id AS user_id,
         u.fullname AS customer_name,
@@ -97,47 +99,113 @@ export const getOrders = asyncHandler(async (req, res) => {
         oi.product_id,
         oi.quantity,
         oi.price_at_purchase,
+        p.title AS product_title
 
-        o.created_at AS order_created_at,
-        o.updated_at AS order_updated_at
-
-        FROM orders o
-        JOIN users u 
-            ON o.user_id = u.id
-        JOIN order_items oi 
-            ON oi.order_id = o.id
-        ORDER BY o.created_at DESC;
-    `,
+     FROM orders o
+     JOIN users u ON o.user_id = u.id
+     JOIN order_items oi ON oi.order_id = o.id
+     JOIN products p ON oi.product_id = p.id
+     ORDER BY o.created_at DESC`,
   );
 
-  res.status(200).json(new ApiResponse(200, { count: orders.length, orders }));
+  // Group order items by order
+  const ordersMap = {};
+  rows.forEach((row) => {
+    if (!ordersMap[row.order_id]) {
+      ordersMap[row.order_id] = {
+        order_id: row.order_id,
+        total_amount: row.total_amount,
+        status: row.status,
+        address: row.address,
+        payment_method: row.payment_method,
+        created_at: row.order_created_at,
+        updated_at: row.order_updated_at,
+        user: {
+          id: row.user_id,
+          name: row.customer_name,
+          email: row.customer_email,
+          role: row.user_role,
+        },
+        items: [],
+      };
+    }
+    ordersMap[row.order_id].items.push({
+      order_item_id: row.order_item_id,
+      product_id: row.product_id,
+      title: row.product_title,
+      quantity: row.quantity,
+      price_at_purchase: row.price_at_purchase,
+    });
+  });
+
+  const groupedOrders = Object.values(ordersMap);
+  res.status(200).json(
+    new ApiResponse(200, {
+      count: groupedOrders.length,
+      orders: groupedOrders,
+    }),
+  );
 });
 
 export const getOrderById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id;
 
   // order info
   const [orderRows] = await pool.query(
-    `SELECT * FROM orders WHERE id = ? AND user_id = ?`,
-    [id, userId],
+    `SELECT 
+        o.id AS order_id,
+        o.total_amount,
+        o.status,
+        o.address,
+        o.payment_method,
+        o.created_at AS order_created_at,
+        o.updated_at AS order_updated_at,
+        
+        u.id AS user_id,
+        u.fullname AS customer_name,
+        u.email AS customer_email,
+        u.role AS user_role
+     FROM orders o
+     JOIN users u ON o.user_id = u.id
+     WHERE o.id = ?`,
+    [id],
   );
+
   if (!orderRows.length) {
     throw new ApiError(404, "Order not found");
   }
 
+  const order = orderRows[0];
+
   // order items
   const [items] = await pool.query(
-    `SELECT oi.id, oi.product_id, oi.quantity, oi.price_at_purchase, p.title
+    `SELECT oi.id AS order_item_id, oi.product_id, oi.quantity, oi.price_at_purchase, p.title AS product_title
      FROM order_items oi
      JOIN products p ON oi.product_id = p.id
      WHERE oi.order_id = ?`,
     [id],
   );
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, { order: { ...orderRows[0], items } }));
+  res.status(200).json(
+    new ApiResponse(200, {
+      order: {
+        order_id: order.order_id,
+        total_amount: order.total_amount,
+        status: order.status,
+        address: order.address,
+        payment_method: order.payment_method,
+        created_at: order.order_created_at,
+        updated_at: order.order_updated_at,
+        user: {
+          id: order.user_id,
+          name: order.customer_name,
+          email: order.customer_email,
+          role: order.user_role,
+        },
+        items,
+      },
+    }),
+  );
 });
 
 export const cancelOrder = asyncHandler(async (req, res) => {
@@ -184,7 +252,10 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid status");
   }
 
+  // Update status
   await pool.query(`UPDATE orders SET status = ? WHERE id = ?`, [status, id]);
 
-  res.status(200).json({ success: true, message: "Order status updated" });
+  res
+    .status(200)
+    .json(new ApiResponse(200, `Order status updated to ${status}`));
 });
