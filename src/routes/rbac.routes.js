@@ -1,6 +1,6 @@
 import express from "express";
 import { verifyToken, authorizeRole } from "../middleware/auth.middleware.js";
-import * as rbac from "../controllers/rbacController.js";
+import * as rbac from "../controllers/rbac.controller.js";
 
 const router = express.Router();
 

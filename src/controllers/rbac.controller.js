@@ -1,6 +1,6 @@
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import pool from "../db/index.js";
+import { pool } from "../db/index.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 /* ===================== ROLES ===================== */

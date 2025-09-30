@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { getUserByIdWithRoles } from "../db/procedures/userProcedures.js";
 
 export const verifyToken = asyncHandler(async (req, res, next) => {
   let token = req.header("Authorization") || "";
@@ -13,6 +14,9 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
   } catch (error) {
     throw new ApiError(401, "Invalid or expired token");
   }
+
+  const user = await getUserByIdWithRoles(decoded.id);
+  if (!user) throw new ApiError(401, "Unauthorized request");
 
   req.user = {
     ...user,
