@@ -24,9 +24,9 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/categories", categoriesRoutes);
 app.use("/api/v1/product", productRoutes);
-app.use("/api/v1/cart",verifyToken, cartRoutes);
+app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/orders", ordersRoutes);
-app.use("/api/v1/reviews",verifyToken, reviewsRoutes);
-app.use("/api/v1/wishlist",verifyToken, wishlistRoutes);
+app.use("/api/v1/reviews", reviewsRoutes);
+app.use("/api/v1/wishlist", wishlistRoutes);
 
 export default app;

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { isAdmin } from "../middleware/auth.middleware.js";
+import { authorizeRole, verifyToken } from "../middleware/auth.middleware.js";
 import {
   createCategory,
   deleteCategory,
@@ -15,14 +15,14 @@ import { validate } from "../middleware/validator.middleware.js";
 
 const router = Router();
 
-router.route("/").get(isAdmin, getAllCategories);
-router.route("/:id").get(isAdmin, getCategory);
+router.route("/").get(authorizeRole("admin"), getAllCategories);
+router.route("/:id").get(authorizeRole("admin"), getCategory);
 router
   .route("/")
-  .post(isAdmin, createCategoryValidator(), validate, createCategory);
+  .post(authorizeRole("admin"), createCategoryValidator(), validate, createCategory);
 router
   .route("/:id")
-  .patch(isAdmin, updateCategoryValidator(), validate, updateCategory);
-router.route("/:id").delete(isAdmin, deleteCategory);
+  .patch(authorizeRole("admin"), updateCategoryValidator(), validate, updateCategory);
+router.route("/:id").delete(authorizeRole("admin"), deleteCategory);
 
 export default router;

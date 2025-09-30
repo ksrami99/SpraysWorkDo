@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { isAdmin, verifyToken } from "../middleware/auth.middleware.js";
+import {  verifyToken } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import {
   createProduct,
@@ -13,13 +13,13 @@ import {
 
 const router = Router();
 
-router.route("/").get(verifyToken, getProducts);
-router.route("/:id").get(verifyToken, getProductById);
+router.route("/").get( getProducts);
+router.route("/:id").get( getProductById);
 
-router.route("/").post(isAdmin, upload.array("images"), createProduct);
-router.route("/:id").put(isAdmin, updateProduct);
-router.route("/:id").delete(isAdmin, deleteProduct);
-router.route("/:id/images").post(isAdmin, upload.array("images"), uploadImage);
-router.route("/:id/images/:imageId").delete(isAdmin, deleteProductImage);
+router.route("/").post( upload.array("images"), createProduct);
+router.route("/:id").put( updateProduct);
+router.route("/:id").delete( deleteProduct);
+router.route("/:id/images").post( upload.array("images"), uploadImage);
+router.route("/:id/images/:imageId").delete( deleteProductImage);
 
 export default router;

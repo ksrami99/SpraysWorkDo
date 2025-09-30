@@ -15,6 +15,6 @@ router
 router.route("/login").post(userLoginValidator(), validate, loginUser);
 router
   .route("/me")
-  .get(verifyToken, getProfile);
+  .get( getProfile);
 
 export default router;
