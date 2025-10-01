@@ -49,7 +49,7 @@ export const deleteRole = asyncHandler(async (req, res) => {
 
 export const listPermissions = asyncHandler(async (req, res) => {
   const [rows] = await pool.query("SELECT * FROM permissions");
-  res.json(new ApiError(200, rows));
+  res.json(new ApiResponse(200, rows));
 });
 
 export const addPermission = asyncHandler(async (req, res) => {
@@ -64,14 +64,18 @@ export const addPermission = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(
-      new ApiError(201, { id: result.insertId, permission_name, description }),
+      new ApiResponse(201, {
+        id: result.insertId,
+        permission_name,
+        description,
+      }),
     );
 });
 
 export const deletePermission = asyncHandler(async (req, res) => {
   const { id } = req.params;
   await pool.query("DELETE FROM permissions WHERE id = ?", [id]);
-  res.json(new ApiError(200, {}, "Permission deleted"));
+  res.json(new ApiResponse(200, {}, "Permission deleted"));
 });
 
 /* ===================== ASSIGN ROLES ===================== */
