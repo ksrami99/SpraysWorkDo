@@ -115,3 +115,61 @@ export const getProfile = asyncHandler(async (req, res) => {
 
   res.json(new ApiResponse(200, user));
 });
+
+/* ====================== ADMIN ====================== */
+
+/* ====================== ADMIN REGISTER ====================== */
+
+export const registerAdmin = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body || {};
+
+  if (!name || !email || !password) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  // check if user exists
+  const [exists] = await pool.query("SELECT id FROM admin WHERE email = ?", [
+    email,
+  ]);
+  if (exists.length) {
+    throw new ApiError(400, "Email already registered");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const [result] = await pool.query(
+    "INSERT INTO admin (name, email, password) VALUES (?, ?, ?)",
+    [name, email, hashedPassword],
+  );
+
+  const userId = result.insertId;
+
+  const token = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
+
+  res.status(201).json(new ApiResponse(201, { token }));
+});
+
+export const loginAdmin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password)
+    throw new ApiError(400, "Email and password required");
+
+  const [rows] = await pool.query("SELECT * FROM admin WHERE email = ?", [
+    email,
+  ]);
+  if (!rows.length) throw new ApiError(401, "Invalid credentials");
+
+  const user = rows[0];
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) throw new ApiError(401, "Invalid credentials");
+
+  const userId = user.id;
+
+  const token = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
+
+  res.json(new ApiResponse(200, { token, user: user }));
+});

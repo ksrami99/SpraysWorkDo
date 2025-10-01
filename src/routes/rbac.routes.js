@@ -1,24 +1,32 @@
 import express from "express";
-import { verifyToken, authorizeRole } from "../middleware/auth.middleware.js";
+import {
+  verifyToken,
+  authorizeRole,
+  authorizeAdmin,
+} from "../middleware/auth.middleware.js";
 import * as rbac from "../controllers/rbac.controller.js";
 
 const router = express.Router();
 
 /* ===== Roles ===== */
-router.get("/roles", verifyToken, authorizeRole("admin"), rbac.listRoles);
-router.post("/roles", verifyToken, authorizeRole("admin"), rbac.addRole);
-router.patch("/roles/:id", verifyToken, authorizeRole("admin"), rbac.editRole);
-router.delete("/roles/:id", verifyToken, authorizeRole("admin"), rbac.deleteRole);
+router.get("/roles", authorizeAdmin, rbac.listRoles);
+router.post("/roles", authorizeAdmin, rbac.addRole);
+router.patch("/roles/:id", authorizeAdmin, rbac.editRole);
+router.delete("/roles/:id", authorizeAdmin, rbac.deleteRole);
 
 /* ===== Permissions ===== */
-router.get("/permissions", verifyToken, authorizeRole("admin"), rbac.listPermissions);
-router.post("/permissions", verifyToken, authorizeRole("admin"), rbac.addPermission);
-router.delete("/permissions/:id", verifyToken, authorizeRole("admin"), rbac.deletePermission);
+router.get("/permissions", authorizeAdmin, rbac.listPermissions);
+router.post("/permissions", authorizeAdmin, rbac.addPermission);
+router.delete("/permissions/:id", authorizeAdmin, rbac.deletePermission);
 
 /* ===== Assignments ===== */
-router.post("/roles/assign", verifyToken, authorizeRole("admin"), rbac.assignRoleToUser);
-router.post("/roles/unassign", verifyToken, authorizeRole("admin"), rbac.removeRoleFromUser);
-router.post("/permissions/assign", verifyToken, authorizeRole("admin"), rbac.grantPermissionToRole);
-router.post("/permissions/revoke", verifyToken, authorizeRole("admin"), rbac.revokePermissionFromRole);
+router.post("/roles/assign", authorizeAdmin, rbac.assignRoleToUser);
+router.post("/roles/unassign", authorizeAdmin, rbac.removeRoleFromUser);
+router.post("/permissions/assign", authorizeAdmin, rbac.grantPermissionToRole);
+router.post(
+  "/permissions/revoke",
+  authorizeAdmin,
+  rbac.revokePermissionFromRole,
+);
 
 export default router;

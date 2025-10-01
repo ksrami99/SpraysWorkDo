@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { getUserByIdWithRoles } from "../db/procedures/userProcedures.js";
+import { pool } from "../db/index.js";
 
 export const verifyToken = asyncHandler(async (req, res, next) => {
   let token = req.header("Authorization") || "";
@@ -53,3 +54,25 @@ export const authorizePermission = (permission) => {
     next();
   });
 };
+
+export const authorizeAdmin = asyncHandler(async (req, res, next) => {
+  let token = req.header("Authorization") || "";
+
+  if (!token) throw new ApiError(401, "Unauthorized request");
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  } catch (error) {
+    throw new ApiError(401, "Invalid or expired token");
+  }
+
+  const [userRows] = await pool.query("SELECT * FROM admin WHERE id = ?", [
+    decoded.id,
+  ]);
+
+  if (!userRows) throw new ApiError(401, "Unauthorized request");
+
+  req.user = userRows;
+  next();
+});
