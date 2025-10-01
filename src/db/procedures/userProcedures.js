@@ -79,3 +79,31 @@ export const getUserByEmailWithRoles = async (email) => {
     ? { ...user, roles: withRoles.roles, permissions: withRoles.permissions }
     : null;
 };
+
+// get all users with roles/permissions
+export const getAllUsersWithRoles = async () => {
+  const [rows] = await pool.query(
+    "SELECT id, fullname, email, created_at, updated_at FROM users",
+  );
+
+  const users = await Promise.all(
+    rows.map(async (u) => await getUserByIdWithRoles(u.id)),
+  );
+
+  return users;
+};
+
+// update user info
+export const updateUserById = async (id, fullname, email) => {
+  const [result] = await pool.query(
+    "UPDATE users SET fullname = ?, email = ? WHERE id = ?",
+    [fullname, email, id],
+  );
+  return result.affectedRows > 0 ? await getUserByIdWithRoles(id) : null;
+};
+
+// delete user
+export const deleteUserById = async (id) => {
+  const [result] = await pool.query("DELETE FROM users WHERE id = ?", [id]);
+  return result.affectedRows > 0;
+};
