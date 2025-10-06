@@ -61,7 +61,6 @@ export const addToCart = asyncHandler(async (req, res) => {
   let [[cart]] = await pool.query("SELECT * FROM carts WHERE user_id = ?", [
     userId,
   ]);
-  console.log(cart);
 
   if (!cart) {
     const [result] = await pool.query(

@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { verifyToken } from "../middleware/auth.middleware.js";
+import {
+  verifyToken,
+  authorizePermission,
+  authorizeRole,
+} from "../middleware/auth.middleware.js";
 import {
   addReview,
   getReviewById,
@@ -9,9 +13,37 @@ import {
 
 const router = Router();
 
-router.route("/products/:productId").get(getReviewsByProduct);
-router.route("/:id").get(getReviewById);
-router.route("/:id").put(updateReview);
-router.route("/:productId").post(addReview);
+router
+  .route("/products/:productId")
+  .get(
+    verifyToken,
+    authorizeRole("client", "admin"),
+    authorizePermission("client", "admin"),
+    getReviewsByProduct,
+  );
+router
+  .route("/:id")
+  .get(
+    verifyToken,
+    authorizeRole("client", "admin"),
+    authorizePermission("client", "admin"),
+    getReviewById,
+  );
+router
+  .route("/:id")
+  .put(
+    verifyToken,
+    authorizeRole("client", "admin"),
+    authorizePermission("client", "admin"),
+    updateReview,
+  );
+router
+  .route("/:productId")
+  .post(
+    verifyToken,
+    authorizeRole("client", "admin"),
+    authorizePermission("client", "admin"),
+    addReview,
+  );
 
 export default router;

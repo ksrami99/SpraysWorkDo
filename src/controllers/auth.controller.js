@@ -73,11 +73,9 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   const userId = result.insertId;
 
-  // assign default "customer" role
   await pool.query(
-    `INSERT INTO user_roles (user_id, role_id)
-     SELECT ?, id FROM roles WHERE role_name = 'customer' LIMIT 1`,
-    [userId],
+    "INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)",
+    [userId, 1],
   );
 
   const user = await getUserWithRolesAndPermissions(userId);
@@ -144,9 +142,13 @@ export const registerAdmin = asyncHandler(async (req, res) => {
 
   const userId = result.insertId;
 
-  const token = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "7d",
-  });
+  const token = jwt.sign(
+    { userId, roles: ["admin"], permissions: ["admin"] },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
 
   res.status(201).json(new ApiResponse(201, { token }));
 });
@@ -167,9 +169,13 @@ export const loginAdmin = asyncHandler(async (req, res) => {
 
   const userId = user.id;
 
-  const token = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "7d",
-  });
+  const token = jwt.sign(
+    { userId, roles: ["admin"], permissions: ["admin"] },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
 
   res.json(new ApiResponse(200, { token, user: user }));
 });

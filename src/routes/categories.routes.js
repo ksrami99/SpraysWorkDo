@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { authorizeRole, verifyToken } from "../middleware/auth.middleware.js";
+import {
+  authorizeRole,
+  verifyToken,
+  authorizePermission,
+} from "../middleware/auth.middleware.js";
 import {
   createCategory,
   deleteCategory,
@@ -15,14 +19,46 @@ import { validate } from "../middleware/validator.middleware.js";
 
 const router = Router();
 
-router.route("/").get(authorizeRole("admin"), getAllCategories);
-router.route("/:id").get(authorizeRole("admin"), getCategory);
 router
   .route("/")
-  .post(authorizeRole("admin"), createCategoryValidator(), validate, createCategory);
+  .get(
+    verifyToken,
+    authorizeRole("client", "admin"),
+    getAllCategories,
+  );
+
 router
   .route("/:id")
-  .patch(authorizeRole("admin"), updateCategoryValidator(), validate, updateCategory);
-router.route("/:id").delete(authorizeRole("admin"), deleteCategory);
+  .get(
+    verifyToken,
+    authorizeRole("client", "category-manager", "admin"),
+    getCategory,
+  );
+
+router
+  .route("/")
+  .post(
+    verifyToken,
+    authorizeRole("category-manager", "admin"),
+    createCategoryValidator(),
+    validate,
+    createCategory,
+  );
+router
+  .route("/:id")
+  .patch(
+    verifyToken,
+    authorizeRole("category-manager", "admin"),
+    updateCategoryValidator(),
+    validate,
+    updateCategory,
+  );
+router
+  .route("/:id")
+  .delete(
+    verifyToken,
+    authorizeRole("admin", "category-manager"),
+    deleteCategory,
+  );
 
 export default router;

@@ -4,12 +4,37 @@ import {
   getWishlist,
   removeFromWishlist,
 } from "../controllers/wishlist.controller.js";
-import { verifyToken } from "../middleware/auth.middleware.js";
+import {
+  verifyToken,
+  authorizePermission,
+  authorizeRole,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.route("/").get(getWishlist);
-router.route("/").post(addToWishlist);
-router.route("/:productId").delete(removeFromWishlist);
+router
+  .route("/")
+  .get(
+    verifyToken,
+    authorizeRole("client"),
+    authorizePermission("client"),
+    getWishlist,
+  );
+router
+  .route("/")
+  .post(
+    verifyToken,
+    authorizeRole("client"),
+    authorizePermission("client"),
+    addToWishlist,
+  );
+router
+  .route("/:productId")
+  .delete(
+    verifyToken,
+    authorizeRole("client"),
+    authorizePermission("client"),
+    removeFromWishlist,
+  );
 
 export default router;
