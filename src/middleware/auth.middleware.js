@@ -16,7 +16,16 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired token");
   }
 
-  const user = await getUserByIdWithRoles(decoded.id);
+  const [user] = await pool.query("SELECT * FROM admin WHERE id = ?", [
+    decoded.id,
+  ]);
+
+  if (user) {
+    req.admin = true;
+  } else {
+    user = await getUserByIdWithRoles(decoded.id);
+  }
+
   if (!user) throw new ApiError(401, "Unauthorized request");
 
   req.user = {
@@ -28,21 +37,28 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
 
 export const authorizeRole = (...allowedRoles) => {
   return asyncHandler(async (req, res, next) => {
+    if (req.admin) {
+      next();
+      return;
+    }
     if (!req.user || !req.user.roles) {
       throw new ApiError(403, "Forbidden: No roles assigned");
     }
-
     const hasRole = req.user.roles.some((role) => allowedRoles.includes(role));
-
     if (!hasRole) {
       throw new ApiError(403, "Forbidden: Insufficient role");
     }
+
     next();
   });
 };
 
 export const authorizePermission = (permission) => {
   return asyncHandler(async (req, res, next) => {
+    if (req.admin) {
+      next();
+      return;
+    }
     if (!req.user || !req.user.permissions) {
       throw new ApiError(403, "Forbidden: No permissions");
     }

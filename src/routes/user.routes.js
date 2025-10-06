@@ -6,7 +6,7 @@ import {
   updateUser,
 } from "../controllers/user.controller.js";
 import { validate } from "../middleware/validator.middleware.js";
-import { verifyToken } from "../middleware/auth.middleware.js";
+import { verifyToken, authorizePermission, authorizeRole } from "../middleware/auth.middleware.js";
 import { userUpdateValidator } from "../validators/user.validator.js";
 
 const router = Router();
