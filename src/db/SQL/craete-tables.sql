@@ -11,7 +11,7 @@ CREATE TABLE users (
 CREATE TABLE roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     role_name VARCHAR(50) NOT NULL UNIQUE,
-    description VARCHAR(255)
+    slug VARCHAR(50) NOT NULL UNIQUE
 );
 
 CREATE TABLE user_roles (
@@ -26,7 +26,7 @@ CREATE TABLE user_roles (
 CREATE TABLE permissions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     permission_name VARCHAR(100) NOT NULL UNIQUE,
-    description VARCHAR(255)
+    slug VARCHAR(100) NOT NULL UNIQUE
 );
 
 

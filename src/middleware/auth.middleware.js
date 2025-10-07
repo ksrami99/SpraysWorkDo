@@ -83,11 +83,12 @@ export const authorizeAdmin = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired token");
   }
 
-  const [userRows] = await pool.query("SELECT * FROM admin WHERE id = ?", [
-    decoded.id,
+  const [userRows] = await pool.query("SELECT * FROM admin WHERE email = ?", [
+    decoded.email,
   ]);
+  console.log(userRows);
 
-  if (!userRows) throw new ApiError(401, "Unauthorized request");
+  if (userRows <= 0) throw new ApiError(401, "Unauthorized request");
 
   req.user = userRows;
   next();

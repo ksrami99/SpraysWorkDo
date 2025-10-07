@@ -3,6 +3,15 @@ import { ApiError } from "../utils/ApiError.js";
 import { pool } from "../db/index.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+const createSlug = (name) => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "") // Remove all non-word characters (except spaces and hyphens)
+    .replace(/[\s_-]+/g, "-") // Replace spaces, underscores, and multiple hyphens with a single hyphen
+    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+};
+
 /* ===================== ROLES ===================== */
 
 export const listRoles = asyncHandler(async (req, res) => {
@@ -11,32 +20,35 @@ export const listRoles = asyncHandler(async (req, res) => {
 });
 
 export const addRole = asyncHandler(async (req, res) => {
-  const { role_name, description } = req.body;
+  const { role_name } = req.body;
   if (!role_name) throw new ApiError(400, "Role name required");
 
+  const slug = createSlug(role_name);
+
   const [result] = await pool.query(
-    "INSERT INTO roles (role_name, description) VALUES (?, ?)",
-    [role_name, description || ""],
+    "INSERT INTO roles (role_name, slug) VALUES (?, ?)",
+    [role_name, slug || ""],
   );
 
   res
     .status(201)
-    .json(
-      new ApiResponse(201, { id: result.insertId, role_name, description }),
-    );
+    .json(new ApiResponse(201, { id: result.insertId, role_name, slug }));
 });
 
 export const editRole = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { role_name, description } = req.body;
+  const { role_name } = req.body;
   if (!role_name) throw new ApiError(400, "Role name required");
 
-  await pool.query(
-    "UPDATE roles SET role_name = ?, description = ? WHERE id = ?",
-    [role_name, description || "", id],
-  );
+  const slug = createSlug(role_name);
 
-  res.status(200).json(new ApiResponse(200, { id, role_name, description }));
+  await pool.query("UPDATE roles SET role_name = ?, slug = ? WHERE id = ?", [
+    role_name,
+    slug,
+    id,
+  ]);
+
+  res.status(200).json(new ApiResponse(200, { id, role_name, slug }));
 });
 
 export const deleteRole = asyncHandler(async (req, res) => {
@@ -53,23 +65,23 @@ export const listPermissions = asyncHandler(async (req, res) => {
 });
 
 export const addPermission = asyncHandler(async (req, res) => {
-  const { permission_name, description } = req.body;
+  const { permission_name } = req.body || {};
   if (!permission_name) throw new ApiError(400, "Permission name required");
 
+  const slug = createSlug(permission_name);
+
   const [result] = await pool.query(
-    "INSERT INTO permissions (permission_name, description) VALUES (?, ?)",
-    [permission_name, description || ""],
+    "INSERT INTO permissions (permission_name, slug) VALUES (?, ?)",
+    [permission_name, slug],
   );
 
-  res
-    .status(201)
-    .json(
-      new ApiResponse(201, {
-        id: result.insertId,
-        permission_name,
-        description,
-      }),
-    );
+  res.status(201).json(
+    new ApiResponse(201, {
+      id: result.insertId,
+      permission_name,
+      slug,
+    }),
+  );
 });
 
 export const deletePermission = asyncHandler(async (req, res) => {

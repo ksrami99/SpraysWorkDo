@@ -143,7 +143,7 @@ export const registerAdmin = asyncHandler(async (req, res) => {
   const userId = result.insertId;
 
   const token = jwt.sign(
-    { userId, roles: ["admin"], permissions: ["admin"] },
+    { userId, email},
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: "7d",
