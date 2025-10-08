@@ -26,24 +26,24 @@ const getUserWithRolesAndPermissions = async (userId) => {
 
   // fetch roles
   const [roleRows] = await pool.query(
-    `SELECT r.role_name 
+    `SELECT r.slug 
      FROM roles r
      JOIN user_roles ur ON ur.role_id = r.id
      WHERE ur.user_id = ?`,
     [userId],
   );
-  const roles = roleRows.map((r) => r.role_name);
+  const roles = roleRows.map((r) => r.slug);
 
   // fetch permissions
   const [permRows] = await pool.query(
-    `SELECT p.permission_name
+    `SELECT p.slug
      FROM permissions p
      JOIN role_permissions rp ON rp.permission_id = p.id
      JOIN user_roles ur ON ur.role_id = rp.role_id
      WHERE ur.user_id = ?`,
     [userId],
   );
-  const permissions = permRows.map((p) => p.permission_name);
+  const permissions = permRows.map((p) => p.slug);
 
   return { ...userRows[0], roles, permissions };
 };
