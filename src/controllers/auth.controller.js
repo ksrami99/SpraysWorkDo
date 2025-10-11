@@ -142,15 +142,15 @@ export const registerAdmin = asyncHandler(async (req, res) => {
 
   const userId = result.insertId;
 
-  const token = jwt.sign(
-    { userId, email},
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: "7d",
-    },
-  );
+  const token = jwt.sign({ userId, email }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
 
-  res.status(201).json(new ApiResponse(201, { token }));
+  res
+    .status(201)
+    .json(
+      new ApiResponse(201, { token, roles: ["admin"], permissions: ["admin"] }),
+    );
 });
 
 export const loginAdmin = asyncHandler(async (req, res) => {
@@ -177,5 +177,12 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     },
   );
 
-  res.json(new ApiResponse(200, { token, user: user }));
+  res.json(
+    new ApiResponse(200, {
+      token,
+      user: user,
+      roles: ["admin"],
+      permissions: ["admin"],
+    }),
+  );
 });
