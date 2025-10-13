@@ -16,17 +16,27 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired token");
   }
 
-  const [user] = await pool.query("SELECT * FROM admin WHERE id = ?", [
+  let user;
+
+  [user] = await pool.query("SELECT * FROM admin WHERE id = ?", [
     decoded.id,
   ]);
+  if(user<1) {
+    [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      decoded.id,
+    ]);
+  }
+
 
   if (user) {
     req.admin = true;
   } else {
     user = await getUserByIdWithRoles(decoded.id);
   }
+  console.log(user);
 
-  if (!user) throw new ApiError(401, "Unauthorized request");
+  if (user.length < 1) throw new ApiError(401, "Unauthorized request");
+  
 
   req.user = {
     ...user,

@@ -142,7 +142,7 @@ export const registerAdmin = asyncHandler(async (req, res) => {
 
   const userId = result.insertId;
 
-  const token = jwt.sign({ userId, email }, process.env.ACCESS_TOKEN_SECRET, {
+  const token = jwt.sign({ id: userId, email }, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: "7d",
   });
 
@@ -170,7 +170,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   const userId = user.id;
 
   const token = jwt.sign(
-    { userId, roles: ["admin"], permissions: ["admin"] },
+    { id: userId, roles: ["admin"], permissions: ["admin"] },
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: "7d",

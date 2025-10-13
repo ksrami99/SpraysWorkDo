@@ -79,7 +79,7 @@ export const getMyOrders = asyncHandler(async (req, res) => {
 });
 
 export const getOrders = asyncHandler(async (req, res) => {
-  // Fetch orders with joined order items
+  // Fetch orders with joined order items and user role
   const [rows] = await pool.query(
     `SELECT 
         o.id AS order_id,
@@ -93,7 +93,13 @@ export const getOrders = asyncHandler(async (req, res) => {
         u.id AS user_id,
         u.fullname AS customer_name,
         u.email AS customer_email,
-        u.role AS user_role,
+        (
+            SELECT GROUP_CONCAT(r.role_name)
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = u.id
+            LIMIT 1
+        ) AS user_roles, 
         
         oi.id AS order_item_id,
         oi.product_id,
@@ -101,11 +107,11 @@ export const getOrders = asyncHandler(async (req, res) => {
         oi.price_at_purchase,
         p.title AS product_title
 
-     FROM orders o
-     JOIN users u ON o.user_id = u.id
-     JOIN order_items oi ON oi.order_id = o.id
-     JOIN products p ON oi.product_id = p.id
-     ORDER BY o.created_at DESC`,
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      JOIN order_items oi ON oi.order_id = o.id
+      JOIN products p ON oi.product_id = p.id
+      ORDER BY o.created_at DESC`,
   );
 
   // Group order items by order
@@ -124,7 +130,7 @@ export const getOrders = asyncHandler(async (req, res) => {
           id: row.user_id,
           name: row.customer_name,
           email: row.customer_email,
-          role: row.user_role,
+          role: row.user_roles ? row.user_roles.split(",")[0] : "guest",
         },
         items: [],
       };
@@ -164,10 +170,16 @@ export const getOrderById = asyncHandler(async (req, res) => {
         u.id AS user_id,
         u.fullname AS customer_name,
         u.email AS customer_email,
-        u.role AS user_role
-     FROM orders o
-     JOIN users u ON o.user_id = u.id
-     WHERE o.id = ?`,
+        (
+            SELECT GROUP_CONCAT(r.role_name)
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = u.id
+            LIMIT 1
+        ) AS user_roles
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.id = ?`,
     [id],
   );
 
@@ -180,9 +192,9 @@ export const getOrderById = asyncHandler(async (req, res) => {
   // order items
   const [items] = await pool.query(
     `SELECT oi.id AS order_item_id, oi.product_id, oi.quantity, oi.price_at_purchase, p.title AS product_title
-     FROM order_items oi
-     JOIN products p ON oi.product_id = p.id
-     WHERE oi.order_id = ?`,
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ?`,
     [id],
   );
 
@@ -200,7 +212,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
           id: order.user_id,
           name: order.customer_name,
           email: order.customer_email,
-          role: order.user_role,
+          role: order.user_roles ? order.user_roles.split(",")[0] : "guest",
         },
         items,
       },
