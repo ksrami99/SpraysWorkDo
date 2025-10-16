@@ -142,9 +142,13 @@ export const registerAdmin = asyncHandler(async (req, res) => {
 
   const userId = result.insertId;
 
-  const token = jwt.sign({ id: userId, email }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "7d",
-  });
+  const token = jwt.sign(
+    { id: userId, email },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
 
   res
     .status(201)
@@ -180,9 +184,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   res.json(
     new ApiResponse(200, {
       token,
-      user: user,
-      roles: ["admin"],
-      permissions: ["admin"],
+      user: { user, roles: ["admin"], permissions: ["admin"] },
     }),
   );
 });

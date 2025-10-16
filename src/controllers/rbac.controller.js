@@ -25,6 +25,20 @@ export const addRole = asyncHandler(async (req, res) => {
 
   const slug = createSlug(role_name);
 
+  // Check if role already exists
+  const [existing] = await pool.query(
+    "SELECT * FROM roles WHERE role_name = ? OR slug = ?",
+    [role_name, slug],
+  );
+
+  if (existing.length > 0) {
+    // Return existing entry
+    return res
+      .status(200)
+      .json(new ApiResponse(200, existing[0], "Role already exists"));
+  }
+
+  // Create new role
   const [result] = await pool.query(
     "INSERT INTO roles (role_name, slug) VALUES (?, ?)",
     [role_name, slug || ""],
@@ -32,8 +46,15 @@ export const addRole = asyncHandler(async (req, res) => {
 
   res
     .status(201)
-    .json(new ApiResponse(201, { id: result.insertId, role_name, slug }));
+    .json(
+      new ApiResponse(
+        201,
+        { id: result.insertId, role_name, slug },
+        "Role created",
+      ),
+    );
 });
+
 
 export const editRole = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -70,18 +91,33 @@ export const addPermission = asyncHandler(async (req, res) => {
 
   const slug = createSlug(permission_name);
 
+  // Check if permission already exists
+  const [existing] = await pool.query(
+    "SELECT * FROM permissions WHERE permission_name = ? OR slug = ?",
+    [permission_name, slug],
+  );
+
+  if (existing.length > 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, existing[0], "Permission already exists"));
+  }
+
+  // Create new permission
   const [result] = await pool.query(
     "INSERT INTO permissions (permission_name, slug) VALUES (?, ?)",
     [permission_name, slug],
   );
 
-  res.status(201).json(
-    new ApiResponse(201, {
-      id: result.insertId,
-      permission_name,
-      slug,
-    }),
-  );
+  res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        { id: result.insertId, permission_name, slug },
+        "Permission created",
+      ),
+    );
 });
 
 export const deletePermission = asyncHandler(async (req, res) => {

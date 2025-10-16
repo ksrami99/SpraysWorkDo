@@ -25,7 +25,6 @@ const deleteOnCloudinary = async (url) => {
   try {
     await cloudinary.api
       .delete_resources([url], { type: "upload" })
-      .then(console.log);
   } catch (error) {
     console.log(error);
   }

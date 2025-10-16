@@ -4,7 +4,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 
 export const getCart = asyncHandler(async (req, res) => {
-  console.log(req.user.id);
   
   const userId = req.user.id;
 

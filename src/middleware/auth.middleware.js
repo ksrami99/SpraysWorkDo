@@ -18,25 +18,18 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
 
   let user;
 
-  [user] = await pool.query("SELECT * FROM admin WHERE id = ?", [
-    decoded.id,
-  ]);
-  if(user<1) {
-    [user] = await pool.query("SELECT * FROM users WHERE id = ?", [
-      decoded.id,
-    ]);
+  [user] = await pool.query("SELECT * FROM admin WHERE id = ?", [decoded.id]);
+  if (user < 1) {
+    [user] = await pool.query("SELECT * FROM users WHERE id = ?", [decoded.id]);
   }
-
 
   if (user) {
     req.admin = true;
   } else {
     user = await getUserByIdWithRoles(decoded.id);
   }
-  console.log(user);
 
   if (user.length < 1) throw new ApiError(401, "Unauthorized request");
-  
 
   req.user = {
     ...user,
@@ -83,6 +76,7 @@ export const authorizePermission = (permission) => {
 
 export const authorizeAdmin = asyncHandler(async (req, res, next) => {
   let token = req.header("Authorization") || "";
+  console.log("Token = ", token);
 
   if (!token) throw new ApiError(401, "Unauthorized request");
 
@@ -90,13 +84,14 @@ export const authorizeAdmin = asyncHandler(async (req, res, next) => {
   try {
     decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
   } catch (error) {
+    console.log(error);
     throw new ApiError(401, "Invalid or expired token");
   }
 
-  const [userRows] = await pool.query("SELECT * FROM admin WHERE email = ?", [
-    decoded.email,
+  const [userRows] = await pool.query("SELECT * FROM admin WHERE id = ?", [
+    decoded.id,
   ]);
-  console.log(userRows);
+
 
   if (userRows <= 0) throw new ApiError(401, "Unauthorized request");
 
