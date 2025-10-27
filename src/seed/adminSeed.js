@@ -8,7 +8,7 @@ const seedAdmin = async () => {
     const fullname = "Super Admin";
 
     // Check if admin already exists
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
+    const [rows] = await pool.query("SELECT * FROM admin WHERE email = ?", [
       email,
     ]);
     if (rows.length > 0) {
@@ -21,7 +21,7 @@ const seedAdmin = async () => {
 
     // Insert admin
     await pool.query(
-      `INSERT INTO users (email, password, fullname, role) VALUES (?, ?, ?, 'admin')`,
+      `INSERT INTO admin (email, password, name) VALUES (?, ?, ?)`,
       [email, hashedPassword, fullname],
     );
 
